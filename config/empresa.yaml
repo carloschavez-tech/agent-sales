@@ -1,0 +1,55 @@
+# ─────────────────────────────────────────────────────────────
+#  TU EMPRESA — esto es lo que el agente usa para vender.
+#  Entre más concreto, mejores propuestas. Llena todo lo que diga TODO.
+# ─────────────────────────────────────────────────────────────
+
+nombre: "Linktic"            # TODO: confirmar nombre comercial
+remitente:
+  nombre: "Carlos Chávez"
+  cargo: "TODO: tu cargo"
+  email: "carlos.chavez@linktic.com"
+  telefono: "TODO: +57 ..."
+  whatsapp: "TODO: link wa.me/..."
+  agenda: "TODO: link de Calendly / Google Calendar para agendar"
+
+sitio_web: "TODO: https://..."
+pais: "Colombia"
+moneda: "COP"                # COP o USD
+
+# Una frase: qué hacen y para quién.
+propuesta_de_valor: >
+  Desarrollamos software a medida que elimina el trabajo manual, conecta
+  tus sistemas y te deja vender más con el mismo equipo.
+
+servicios:
+  - Plataformas web y portales de clientes
+  - Apps móviles (iOS / Android)
+  - Automatización de procesos e integraciones (ERP, CRM, WhatsApp, pasarelas de pago)
+  - Agentes de IA y chatbots para ventas y atención
+  - E-commerce y sistemas de reservas/agendamiento
+  - Dashboards e inteligencia de negocio
+
+# Casos reales dan MUCHÍSIMA credibilidad. El agente NUNCA inventa casos:
+# solo usa los que pongas aquí.
+casos_de_exito:
+  - cliente: "TODO: nombre o sector (ej. 'Distribuidora de alimentos en Bogotá')"
+    problema: "TODO"
+    solucion: "TODO"
+    resultado: "TODO: con número (ej. 'redujo 70% el tiempo de facturación')"
+
+# Rangos de referencia para que las inversiones propuestas sean realistas.
+precios_referencia:
+  landing_o_web_corporativa: "TODO: ej. 3.000.000 - 8.000.000 COP"
+  ecommerce: "TODO"
+  plataforma_web_a_medida: "TODO"
+  app_movil: "TODO"
+  automatizacion_o_integracion: "TODO"
+  agente_ia: "TODO"
+  mantenimiento_mensual: "TODO"
+
+# Oferta gancho para cerrar la primera reunión (ej. diagnóstico gratis de 30 min,
+# prototipo navegable en 5 días, primer mes de soporte gratis…)
+oferta_gancho: "Diagnóstico técnico gratuito de 30 minutos + prototipo navegable en 5 días hábiles si avanzamos."
+
+# Tono del correo: cercano | ejecutivo | directo
+tono: "cercano"
