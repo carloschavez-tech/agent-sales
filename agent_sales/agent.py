@@ -18,8 +18,8 @@ from .schema import PROPOSAL_SCHEMA
 MODEL = "claude-opus-5"
 BETAS = ["server-side-fallback-2026-07-01"]
 WEB_TOOLS = [
-    {"type": "web_search_20260209", "name": "web_search", "max_uses": 12},
-    {"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": 12},
+    {"type": "web_search_20260209", "name": "web_search"},
+    {"type": "web_fetch_20260209", "name": "web_fetch"},
 ]
 MAX_RESTARTS = 5
 
@@ -38,9 +38,10 @@ def _check_refusal(message, fase: str) -> None:
         raise RuntimeError(f"El modelo se negó en la fase de {fase}: {detalle}")
 
 
-def investigar(client: anthropic.Anthropic, target: str, contexto: str | None) -> str:
-    """Fase 1: investigación web del prospecto (sitio, redes, reseñas, competencia)."""
-    messages = [{"role": "user", "content": research_prompt(target, contexto)}]
+def investigar_web(client: anthropic.Anthropic, system: str, prompt: str, max_uses: int = 12) -> str:
+    """Corre una investigación con búsqueda y lectura web; devuelve el informe en texto."""
+    tools = [{**t, "max_uses": max_uses} for t in WEB_TOOLS]
+    messages = [{"role": "user", "content": prompt}]
     for _ in range(MAX_RESTARTS + 1):
         with client.beta.messages.stream(
             model=MODEL,
@@ -49,8 +50,8 @@ def investigar(client: anthropic.Anthropic, target: str, contexto: str | None) -
             fallbacks="default",
             thinking={"type": "adaptive"},
             output_config={"effort": "high"},
-            system=RESEARCH_SYSTEM,
-            tools=WEB_TOOLS,
+            system=system,
+            tools=tools,
             messages=messages,
         ) as stream:
             for event in stream:
@@ -68,27 +69,32 @@ def investigar(client: anthropic.Anthropic, target: str, contexto: str | None) -
     raise RuntimeError("La investigación no terminó tras varios reintentos.")
 
 
-def proponer(client: anthropic.Anthropic, research: str, empresa_yaml: str, target: str) -> dict:
-    """Fase 2: propuesta a medida + correo + secuencia de seguimiento (JSON estructurado)."""
+def investigar(client: anthropic.Anthropic, target: str, contexto: str | None) -> str:
+    """Fase 1: investigación web del prospecto (sitio, redes, reseñas, competencia)."""
+    return investigar_web(client, RESEARCH_SYSTEM, research_prompt(target, contexto))
+
+
+def estructurar(client: anthropic.Anthropic, system: str, prompt: str, schema: dict) -> dict:
+    """Llamada con salida JSON estructurada según `schema`."""
     with client.beta.messages.stream(
         model=MODEL,
         max_tokens=64000,
         betas=BETAS,
         fallbacks="default",
         thinking={"type": "adaptive"},
-        output_config={
-            "effort": "high",
-            "format": {"type": "json_schema", "schema": PROPOSAL_SCHEMA},
-        },
-        system=PROPOSAL_SYSTEM,
-        messages=[{
-            "role": "user",
-            "content": proposal_prompt(research, empresa_yaml, target),
-        }],
+        output_config={"effort": "high", "format": {"type": "json_schema", "schema": schema}},
+        system=system,
+        messages=[{"role": "user", "content": prompt}],
     ) as stream:
         message = stream.get_final_message()
 
-    _check_refusal(message, "propuesta")
+    _check_refusal(message, "estructuración")
     if message.stop_reason == "max_tokens":
-        raise RuntimeError("La propuesta se cortó por longitud (max_tokens).")
+        raise RuntimeError("La respuesta se cortó por longitud (max_tokens).")
     return json.loads(_text(message))
+
+
+def proponer(client: anthropic.Anthropic, research: str, empresa_yaml: str, target: str) -> dict:
+    """Fase 2: propuesta a medida + correo + secuencia de seguimiento (JSON estructurado)."""
+    return estructurar(client, PROPOSAL_SYSTEM, proposal_prompt(research, empresa_yaml, target),
+                       PROPOSAL_SCHEMA)
