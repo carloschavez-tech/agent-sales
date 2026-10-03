@@ -9,6 +9,15 @@ Investiga con las herramientas web (búsqueda y lectura de páginas). Si te dan 
 sitio, búscalos: Google Maps/reseñas, Instagram, Facebook, LinkedIn, directorios, noticias, \
 marketplaces (Rappi, Mercado Libre…), bolsas de empleo (las vacantes revelan procesos manuales).
 
+PASO 0 — VERIFICA LA IDENTIDAD ANTES DE TODO. Hay muchas marcas con el mismo nombre o handle.
+Solo cuenta como VERIFICADA si se cumple al menos una:
+  a) Leíste directamente la página/perfil que te dieron y de ahí sale el negocio que investigas, o
+  b) Una fuente lee explícitamente el vínculo (ej. el sitio enlaza a ESE Instagram exacto, o un \
+     resultado de búsqueda muestra ese handle con el mismo sector/ciudad).
+Coincidir solo en el nombre o el handle NO verifica nada. Si el contexto del vendedor dice sector o \
+ciudad, la marca investigada debe coincidir en ambos. Si no puedes verificar, NO sigas investigando \
+una candidata: reporta qué candidatas encontraste y qué dato haría falta para distinguirlas.
+
 Qué debes descubrir:
 1. Quiénes son: sector, tamaño aproximado, ubicación, años en el mercado, propuesta de valor, clientes.
 2. Cómo venden y atienden hoy: canales (WhatsApp, formulario, teléfono, tienda física, e-commerce), \
@@ -28,7 +37,12 @@ Reglas:
 - Detalles específicos valen oro: un producto concreto, una reseña textual, un error visible del sitio. \
   Eso es lo que hace que el correo se sienta escrito a mano.
 
-Entrega un INFORME DE INVESTIGACIÓN en español, organizado por los 6 puntos, con las URLs fuente."""
+Entrega un INFORME DE INVESTIGACIÓN en español, organizado por los 6 puntos, con las URLs fuente.
+La PRIMERA línea del informe debe ser exactamente una de estas:
+IDENTIDAD: VERIFICADA — <cómo la verificaste, con URL>
+IDENTIDAD: NO VERIFICADA — <candidatas encontradas y qué dato falta para distinguirlas>"""
+
+IDENTIDAD_OK = "IDENTIDAD: VERIFICADA"
 
 
 PROPOSAL_SYSTEM = """\

@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 
 from . import render
 from .agent import investigar, proponer
+from .prompts import IDENTIDAD_OK
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -35,6 +36,8 @@ def main() -> None:
     ap.add_argument("prospecto", help='URL del sitio, o descripción si no tiene web: '
                                       '"Panadería La Espiga, Medellín, IG @laespiga"')
     ap.add_argument("--contexto", help="Lo que ya sabes del cliente (reunión, referido, dolor mencionado…)")
+    ap.add_argument("--forzar", action="store_true",
+                    help="Generar la propuesta aunque no se haya podido verificar la identidad")
     ap.add_argument("--config", default=str(ROOT / "config" / "empresa.yaml"))
     ap.add_argument("--out", default=str(ROOT / "salidas"))
     args = ap.parse_args()
@@ -49,6 +52,21 @@ def main() -> None:
 
     print(f"🕵️  Investigando: {args.prospecto}", file=sys.stderr)
     research = investigar(client, args.prospecto, args.contexto)
+
+    lineas = (l.strip().strip("*#> ").replace("**", "") for l in research.splitlines())
+    identidad = next((l for l in lineas if l.startswith("IDENTIDAD:")),
+                     "IDENTIDAD: NO VERIFICADA — el informe no reportó verificación")
+    if not identidad.startswith(IDENTIDAD_OK) and not args.forzar:
+        out = Path(args.out) / f"{date.today():%Y-%m-%d}_{_slug(args.prospecto)}_SIN-VERIFICAR"
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "investigacion.md").write_text(research, encoding="utf-8")
+        print(f"\n⛔ No pude confirmar que el prospecto sea el negocio correcto. NO generé el correo.\n"
+              f"   {identidad}\n\n"
+              f"   Vuelve a correrlo con más datos, por ejemplo:\n"
+              f'   python -m agent_sales "{args.prospecto}" --contexto "jabones artesanales, Bogotá, web: ..."\n'
+              f"   (o usa --forzar si ya lo confirmaste tú). Investigación guardada en {out}", file=sys.stderr)
+        sys.exit(2)
+    print(f"✔️  {identidad}", file=sys.stderr)
 
     print("🧠 Diseñando propuesta y correo…", file=sys.stderr)
     data = proponer(client, research, empresa_yaml, args.prospecto)

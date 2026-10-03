@@ -34,6 +34,7 @@ python -m agent_sales https://www.ejemplo.com.co --contexto "Nos refirió Juan; 
 
 ## Personalizar
 
+- **Verificación de identidad:** si el agente no puede confirmar que el prospecto es el negocio correcto (pasa mucho con Instagram), se detiene y no escribe el correo. Dale más datos con `--contexto "sector, ciudad, web"` o usa `--forzar` si ya lo confirmaste tú.
 - `config/empresa.yaml`: **lo más importante**. Casos de éxito reales con números y precios de referencia hacen que la propuesta sea creíble. El agente nunca inventa casos.
 - `agent_sales/prompts.py`: el "cerebro" vendedor (reglas de copy, estructura del correo, tono).
 - `agent_sales/render.py`: diseño del correo y de la propuesta (color de marca en `ACCENT`).
