@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────
+#  AGENTE DE TRADING — reglas del trato.
+#  El agente da las señales (cerebro); tú ejecutas en el exchange (manos).
+# ─────────────────────────────────────────────────────────────
+
+# "papel" = practicas sin dinero real (registras como si ejecutaras).
+# "real"  = el agente no te deja pasar a real sin un historial en papel que lo justifique.
+modo: papel
+
+capital_inicial: 1000          # USD en la cuenta de trading (TODO: tu capital real)
+zona_horaria: America/Bogota   # el "día" de trading se corta a medianoche en esta zona
+
+# ── El trato ─────────────────────────────────────────────────
+meta_diaria: 10                # USD
+reparto:
+  usuario: 0.60                # 6 de cada 10 USD
+  agente: 0.40                 # 4 de cada 10 USD → fondo del agente
+parar_al_llegar_meta: true     # meta cumplida = no más operaciones ese día
+
+# ── Riesgo ───────────────────────────────────────────────────
+riesgo_por_operacion_pct: 1.0  # % del capital que se arriesga por operación (distancia al stop)
+perdida_max_diaria: 10         # USD; si se pierde esto en el día, no se opera más hasta mañana
+max_operaciones_dia: 3
+max_apalancamiento: 3          # nunca más de 3x sobre el capital
+comision_pct: 0.05             # por lado (taker de futuros Binance ≈ 0.05 %)
+
+# ── Apagado (kill switch) ────────────────────────────────────
+# Las pérdidas se cobran primero del fondo del agente. Si el fondo queda en
+# deuda por más de este monto, el agente se apaga y solo tú puedes reactivarlo.
+limite_deuda_agente: 30        # USD (= 3 días malos seguidos sin recuperar)
+# Si el capital cae este % desde su máximo, el agente se apaga.
+drawdown_max_pct: 10
+# Para pasar de papel a real: mínimo de operaciones en papel con resultado neto positivo.
+min_operaciones_papel: 30
+
+# ── Mercado ──────────────────────────────────────────────────
+exchange: binance_futuros      # binance_futuros | binance_spot | bybit
+temporalidad: 15m              # vela de entrada; la tendencia se mide en 1h (se arma de las de 15m)
+simbolos:
+  BTCUSDT: {paso_cantidad: 0.001}
+  ETHUSDT: {paso_cantidad: 0.001}
+  SOLUSDT: {paso_cantidad: 1}
