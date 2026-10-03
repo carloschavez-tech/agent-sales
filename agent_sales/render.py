@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from html import escape
 
 ACCENT = "#4F46E5"
@@ -20,6 +21,11 @@ def _firma_txt(empresa: dict) -> str:
     lineas = [r.get("nombre", ""), f'{r.get("cargo", "")} · {empresa.get("nombre", "")}',
               r.get("telefono", ""), empresa.get("sitio_web", "")]
     return "\n".join(l for l in lineas if l and "TODO" not in l)
+
+
+def _posdata(texto: str) -> str:
+    """El modelo a veces incluye 'P.D.' en el texto; la plantilla ya lo agrega."""
+    return re.sub(r"^\s*(p\.?\s*d\.?|p\.?\s*s\.?)\s*:?\s*", "", texto, flags=re.I)
 
 
 def _cta_url(empresa: dict) -> str:
@@ -42,7 +48,7 @@ def correo_txt(data: dict, empresa: dict) -> str:
         f'{c["saludo"]}\n\n{c["cuerpo"].strip()}\n\n'
         f'👉 {c["cta_texto_boton"]}: {_cta_url(empresa)}\n\n'
         f"{_firma_txt(empresa)}\n\n"
-        f'P.D. {c["posdata"]}\n'
+        f'P.D. {_posdata(c["posdata"])}\n'
     )
 
 
@@ -86,7 +92,7 @@ def correo_html(data: dict, empresa: dict) -> str:
 <a href="{escape(_cta_url(empresa))}" style="display:inline-block;padding:12px 22px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;">{escape(c["cta_texto_boton"])} →</a>
 </td></tr></table>
 <p style="margin:0 0 18px;font-size:14px;line-height:1.5;color:#374151;">{firma}</p>
-<p style="margin:0;font-size:14px;line-height:1.6;color:#4b5563;"><strong>P.D.</strong> {escape(c["posdata"])}</p>
+<p style="margin:0;font-size:14px;line-height:1.6;color:#4b5563;"><strong>P.D.</strong> {escape(_posdata(c["posdata"]))}</p>
 <p style="margin:26px 0 0;font-size:11px;color:#9ca3af;">Si no es de tu interés, responde "no" y no te vuelvo a escribir. · {escape(r.get("email", ""))}</p>
 </td></tr></table>
 </td></tr></table>

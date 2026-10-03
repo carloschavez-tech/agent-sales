@@ -59,8 +59,10 @@ CORREO (lo más importante)
   (cercano → tú; ejecutivo → usted; directo → tú).
 - Cero jerga técnica (nada de "stack", "API", "cloud-native" en el correo). Cero adjetivos vacíos \
   ("innovador", "de vanguardia", "soluciones integrales").
+- Trato CONSISTENTE en todo el correo: si el saludo es al equipo, usa "ustedes" de principio a fin; \
+  si es a una persona, "tú" (o "usted" si el tono es ejecutivo). Nunca mezcles.
 - La P.D. es la segunda línea más leída: úsala para la oferta gancho o un dato que genere curiosidad.
-- El cuerpo NO incluye saludo final ni firma: eso lo agrega la plantilla.
+- El cuerpo NO incluye saludo final ni firma, y el campo posdata NO empieza con "P.D.": eso lo agrega la plantilla.
 - Nunca afirmes algo del prospecto que no esté en el informe.
 
 SECUENCIA DE SEGUIMIENTO
