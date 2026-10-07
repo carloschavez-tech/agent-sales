@@ -1,5 +1,8 @@
 """Backtest con las mismas reglas del trato: meta diaria, pérdida máxima, reparto y apagado.
 
+Si el agente se apaga, la simulación lo "reactiva" al día siguiente (deuda perdonada) y sigue,
+para medir la estrategia en TODO el periodo; se reporta cuántas veces se habría apagado.
+
 Supuestos conservadores: entrada al cierre de la vela de señal con comisión taker; si en una
 misma vela se tocan stop y objetivo, cuenta como stop.
 """
@@ -25,7 +28,8 @@ def simular(simbolo: str, v15: list[Vela], cfg: dict, paso: float) -> dict:
     pnl_dia: dict[str, float] = defaultdict(float)
     ops_dia: dict[str, int] = defaultdict(int)
     trades: list[dict] = []
-    apagado = None
+    apagados: list[str] = []
+    dia_apagado = None
     dia_liquidado = None
 
     def liquidar(dia: str) -> None:
@@ -38,11 +42,14 @@ def simular(simbolo: str, v15: list[Vela], cfg: dict, paso: float) -> dict:
             fondo += p
 
     i = 220 * 4  # calentamiento: EMA200 de 1h
-    while i < len(v15) - 1 and not apagado:
+    while i < len(v15) - 1:
         dia = dia_de[i]
         if dia_liquidado is not None and dia != dia_liquidado:
             liquidar(dia_liquidado)
         dia_liquidado = dia
+        if dia == dia_apagado:
+            i += 1
+            continue
         p = pnl_dia[dia]
         if (p <= -cfg["perdida_max_diaria"] or ops_dia[dia] >= cfg["max_operaciones_dia"]
                 or (cfg.get("parar_al_llegar_meta", True) and p >= cfg["meta_diaria"])):
@@ -91,14 +98,21 @@ def simular(simbolo: str, v15: list[Vela], cfg: dict, paso: float) -> dict:
         ops_dia[dia] += 1
         capital += pnl
         pico = max(pico, capital)
-        trades.append({"dia": dia, "lado": s.lado, "pnl": pnl})
+        trades.append({"dia": dia, "lado": s.lado, "entrada": s.entrada, "stop": s.stop,
+                       "cantidad": qty, "velas": j - i, "pnl": pnl})
         fondo_hoy = fondo + min(pnl_dia[dia_cierre], 0.0)
+        motivo = None
         if fondo_hoy <= -cfg["limite_deuda_agente"]:
-            apagado = f"{dia_cierre}: deuda del agente {fondo_hoy:.2f} USD"
+            motivo = f"{dia_cierre} deuda {fondo_hoy:.0f}"
         elif capital <= pico * (1 - cfg["drawdown_max_pct"] / 100):
-            apagado = f"{dia_cierre}: drawdown {100 * (1 - capital / pico):.1f} %"
+            motivo = f"{dia_cierre} drawdown {100 * (1 - capital / pico):.0f}%"
+        if motivo:
+            apagados.append(motivo)
+            liquidar(dia_cierre)
+            fondo, pico, dia_apagado = 0.0, capital, dia_cierre
+            pnl_dia[dia_cierre] = 0.0  # ya liquidado; reactivación al día siguiente
         i = j + 1
-    if dia_liquidado and not apagado:
+    if dia_liquidado:
         liquidar(dia_liquidado)
 
     dias = sorted(set(dia_de[220 * 4:]))
@@ -118,5 +132,6 @@ def simular(simbolo: str, v15: list[Vela], cfg: dict, paso: float) -> dict:
         "dias_perdida": sum(1 for d in dias if pnl_dia.get(d, 0) < 0),
         "para_usuario": usuario,
         "fondo_agente": fondo,
-        "apagado": apagado,
+        "apagados": apagados,
+        "trades": trades,
     }

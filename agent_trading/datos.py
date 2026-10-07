@@ -87,3 +87,15 @@ def a_hora(velas15: list[Vela]) -> tuple[list[Vela], list[int]]:
                               min(x.l for x in grupo), grupo[-1].c, sum(x.v for x in grupo)))
             cierre.append(i)
     return horas, cierre
+
+
+def guardar_csv(ruta, vs: list[Vela]) -> None:
+    with open(ruta, "w", encoding="utf-8") as f:
+        f.write("t,o,h,l,c,v\n")
+        f.writelines(f"{v.t},{v.o},{v.h},{v.l},{v.c},{v.v}\n" for v in vs)
+
+
+def cargar_csv(ruta) -> list[Vela]:
+    with open(ruta, encoding="utf-8") as f:
+        next(f)
+        return [Vela(int(t), *map(float, resto)) for t, *resto in (l.strip().split(",") for l in f if l.strip())]

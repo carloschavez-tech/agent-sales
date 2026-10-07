@@ -5,6 +5,7 @@
   python -m agent_trading cerrar --precio 61800 [--cantidad 0.001]   # salida total o parcial (TP1)
   python -m agent_trading estado                # PnL de hoy, reparto 60/40, fondo del agente, apagado
   python -m agent_trading backtest --dias 90    # ¿la estrategia gana en el pasado con estas reglas?
+  python -m agent_trading exportar --dias 365   # guarda velas en datos/ para analizarlas offline
   python -m agent_trading plan                  # cuánto capital hace realista la meta diaria
   python -m agent_trading solicitar --monto 5 --motivo "..."   # el agente pide de su fondo
   python -m agent_trading aprobar 1 | rechazar 1
@@ -143,23 +144,41 @@ def cmd_estado(cfg: dict, lib: Libro, args) -> None:
         print(f"  Para pasar a real: {lib.apto_para_real()[1]}")
 
 
+def _velas_backtest(cfg: dict, sim: str, dias: int, carpeta: str | None) -> list:
+    n = dias * 96 + 220 * 4
+    if carpeta:
+        return datos.cargar_csv(Path(carpeta) / f"{sim}_{cfg['temporalidad']}.csv")[-n:]
+    return datos.velas(cfg["exchange"], sim, cfg["temporalidad"], n)
+
+
 def cmd_backtest(cfg: dict, lib: Libro, args) -> None:
     simbolos = [args.simbolo] if args.simbolo else list(cfg["simbolos"])
-    n = args.dias * 96 + 220 * 4
     print(f"Backtest {args.dias} días · capital {cfg['capital_inicial']} · riesgo "
           f"{cfg['riesgo_por_operacion_pct']} % · comisión {cfg['comision_pct']} %/lado\n")
     for sim in simbolos:
         try:
-            v15 = datos.velas(cfg["exchange"], sim, cfg["temporalidad"], n)
+            v15 = _velas_backtest(cfg, sim, args.dias, args.datos)
         except Exception as e:
             print(f"⚠️  {sim}: no pude traer datos ({e})")
             continue
         r = simular(sim, v15, cfg, cfg["simbolos"][sim]["paso_cantidad"])
+        ap = r["apagados"]
         print(f"""{sim}: {r['operaciones']} operaciones en {r['dias']} días · acierto {r['acierto_pct']:.0f} % · factor {r['factor_beneficio']:.2f}
    PnL {r['pnl_total']:+.2f} USD ({r['pnl_por_dia']:+.2f}/día) · días con meta {r['dias_meta']} · días en pérdida {r['dias_perdida']}
-   Para ti {r['para_usuario']:.2f} · fondo agente {r['fondo_agente']:+.2f} · {'⛔ SE HABRÍA APAGADO ' + r['apagado'] if r['apagado'] else 'no se apagó'}
+   Para ti {r['para_usuario']:.2f} · fondo agente {r['fondo_agente']:+.2f} · {f'⛔ se habría apagado {len(ap)} veces ({", ".join(ap[:3])}{"…" if len(ap) > 3 else ""})' if ap else 'no se apagó'}
 """)
     print("Factor < 1.2 o apagado = la estrategia NO tiene ventaja con estas reglas; no la uses con dinero real.")
+
+
+def cmd_exportar(cfg: dict, lib: Libro, args) -> None:
+    carpeta = ROOT / "datos"
+    carpeta.mkdir(exist_ok=True)
+    for sim in cfg["simbolos"]:
+        vs = datos.velas(cfg["exchange"], sim, cfg["temporalidad"], args.dias * 96)
+        ruta = carpeta / f"{sim}_{cfg['temporalidad']}.csv"
+        datos.guardar_csv(ruta, vs)
+        print(f"✅ {ruta.relative_to(ROOT)}: {len(vs)} velas")
+    print("\nPara que el agente las analice: git add datos && git commit -m 'Velas' && git push")
 
 
 def cmd_plan(cfg: dict, lib: Libro, args) -> None:
@@ -198,6 +217,9 @@ def main() -> None:
     p = sub.add_parser("backtest")
     p.add_argument("--dias", type=int, default=90)
     p.add_argument("--simbolo")
+    p.add_argument("--datos", help="carpeta con CSV de `exportar` (en vez de bajar del exchange)")
+    p = sub.add_parser("exportar")
+    p.add_argument("--dias", type=int, default=365)
     p = sub.add_parser("solicitar")
     p.add_argument("--monto", type=float, required=True)
     p.add_argument("--motivo", required=True)
@@ -237,7 +259,7 @@ def main() -> None:
             print("Agente reactivado.")
         else:
             {"senal": cmd_senal, "abrir": cmd_abrir, "cerrar": cmd_cerrar, "estado": cmd_estado,
-             "backtest": cmd_backtest, "plan": cmd_plan}[args.cmd](cfg, lib, args)
+             "backtest": cmd_backtest, "plan": cmd_plan, "exportar": cmd_exportar}[args.cmd](cfg, lib, args)
     except ValueError as e:
         sys.exit(f"⚠️  {e}")
 

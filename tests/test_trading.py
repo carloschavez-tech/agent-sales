@@ -127,6 +127,7 @@ class Backtest(unittest.TestCase):
         r = simular("BTCUSDT", serie(96 * 60), CFG, 0.0001)
         self.assertGreater(r["operaciones"], 0)
         self.assertLessEqual(r["operaciones"], r["dias"] * CFG["max_operaciones_dia"])
+        self.assertGreater(max(t["dia"] for t in r["trades"]), r["trades"][0]["dia"])
         print("\n", {k: round(v, 2) if isinstance(v, float) else v for k, v in r.items()})
 
 
